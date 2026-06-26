@@ -4,7 +4,7 @@ import pygame
 
 from code.menu import Menu
 
-
+# oi
 class Game:
     def __init__(self):
         pygame.init()
