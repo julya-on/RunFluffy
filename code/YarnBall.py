@@ -8,7 +8,7 @@ class YarnBall(Entity):
     def __init__(self, name: str, position: tuple):
         super().__init__(name, position)
         # Define a velocidade da bola
-        self.speed = ENTITY_SPEED['bola']
+        self.speed = ENTITY_SPEED['ball']
 
     def move(self):
         # Move a bola para a esquerda
@@ -27,6 +27,7 @@ class YarnBall(Entity):
                 self.subindo = True
 
         if self.rect.right < 0:
-            self.rect.x = WIN_WIDTH + 100
-            self.rect.y = 270
+            import random
+            self.rect.x = WIN_WIDTH + random.randint(50,300)
+            self.rect.y = random.randint(150, 280)
             self.subindo = True

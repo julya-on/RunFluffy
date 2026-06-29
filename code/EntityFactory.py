@@ -27,7 +27,10 @@ class EntityFactory:
 
             case 'bola':
                 from code.YarnBall import YarnBall
-                return YarnBall('ball', (700, 270))
+                import random
+                random_x = random.randint(700, 1000)
+                random_y = random.randint(150, 280)
+                return YarnBall('ball', (random_x, random_y))
 
             case _:
                 return None

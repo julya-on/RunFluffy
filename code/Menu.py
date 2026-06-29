@@ -15,6 +15,7 @@ class Menu:
         self.rect = self.surf.get_rect(left=0, top=0)
 
     def run(self):
+
         menu_option = 0
         pygame.mixer_music.load('./asset./melodia.wav')
         pygame.mixer_music.play(-1)
@@ -29,6 +30,12 @@ class Menu:
                     self.menu_text(20, MENU_OPTION[i], COLOR_YELLOW, ((WIN_WIDTH / 2), 200 + 25 * i))
                 else:
                     self.menu_text(20, MENU_OPTION[i], COLOR_BLUE, ((WIN_WIDTH / 2), 200 + 25 * i))
+
+            self.menu_text(18, 'CONTROLS:', COLOR_BLUE, (100, 260))
+            self.menu_text(15,'SPACE: Jump', COLOR_BLUE, (100, 290))
+            self.menu_text(15,'Right and Left arrows: Move', COLOR_BLUE, (100, 310))
+
+
             pygame.display.flip()
 
 

@@ -4,6 +4,8 @@
 import sys
 import pygame
 
+from code.Const import WIN_WIDTH
+
 pygame.mixer.init()
 
 from code.CatPlayer import CatPlayer
@@ -33,19 +35,20 @@ class Level:
         self.timeout = 20000
         self.clock = pygame.time.Clock()
         self.score = 0
-        self.font = pygame.font.SysFont('Cambria', 22, bold=True)
+        self.font = pygame.font.SysFont('Cambria', 15, bold=True)
 
         self.sound_bark= pygame.mixer.Sound('./asset./dog_bark.wav')
         self.sound_meow = pygame.mixer.Sound('./asset./cat_meow.wav')
 
-        self.sound_bark.set_volume(0.2)
-        self.sound_meow.set_volume(0.7)
+        self.sound_bark.set_volume(0.9)
+        self.sound_meow.set_volume(0.9)
 
     def run(self):
 
         while True:
-
+            # Atualiza o tempo restante de jogo
             self.clock.tick(60)
+            self.timeout -= self.clock.get_time()
 
             # Eventos
             for event in pygame.event.get():
@@ -55,7 +58,7 @@ class Level:
 
             gato = None
             cachorro = None
-            bola = None
+            bolas = []
 
             # Limpa a tela
             self.window.fill((0, 0, 0))
@@ -72,26 +75,28 @@ class Level:
                     cachorro = ent
 
                 elif isinstance(ent, YarnBall):
-                    bola = ent
-
+                    bolas.append(ent)
 
             # Inteligência do cachorro
             if cachorro is not None and gato is not None:
 
-                if getattr(gato, 'is_moving', False):
+                # Se o gato estiver parado e próximo do lado esquerdo
+                if gato.rect.x <= 150 and not getattr(gato, 'is_moving', False):
 
-                    # Cachorro permanece no canto esquerdo
-                    if cachorro.rect.x > 30:
-                        cachorro.rect.x -= 2
-                    elif cachorro.rect.x < 30:
-                        cachorro.rect.x = 30
+                     # Cachorro persegue o gato
+                    if cachorro.rect.x < gato.rect.x:
+                            cachorro.rect.x += 3
+
+                    # Cachorro late apenas se o gato não miar.
+                    if not pygame.mixer.get_busy():
+                            self.sound_bark.play()
 
                 else:
-
-                    # Gato parou, cachorro persegue
-                    if cachorro.rect.x < gato.rect.x:
-                        cachorro.rect.x += 2
-
+                    # Se o gato estiver andando, o cachorro retorna para o canto esquerdo
+                    if cachorro.rect.x > 30:
+                            cachorro.rect.x -= 2
+                    else:
+                            cachorro.rect.x = 30
 
             # Trava da tela
             largura = self.window.get_width()
@@ -105,43 +110,91 @@ class Level:
                     cachorro.rect.right = largura
 
 
-            # Colisão gato e bola
-            if gato is not None and bola is not None:
+            # Colisão gato e bolas
+            if gato is not None:
+                for b in bolas:
 
-                rect_bola = bola.rect.inflate(-20, -20)
+                   rect_bola = b.rect.inflate(-20, -20)
 
-                if gato.rect.colliderect(rect_bola):
+                   if gato.rect.colliderect(rect_bola):
 
-                    bola.rect.x = 850
-                    bola.rect.y = 270
-                    bola.subindo = True
+                      import random
 
-                    self.score += 1
+                      b.rect.x = WIN_WIDTH + random.randint(50, 350)
+                      b.rect.y = random.randint(150, 270)
+                      b.subindo = True
 
+                      self.score += 1
 
-            # Colisão cachorro e gato
+            # Colisão gato e cachorro
             if gato is not None and cachorro is not None:
 
                 if gato.rect.colliderect(cachorro.rect):
 
-                    if not getattr(gato, 'is_moving', False):
+                   # Toca os sons
+                   self.sound_bark.play()
+                   self.sound_meow.play() # O gato mia ao colidir com o cachorro.
 
-                       # Toca os sons
-                       self.sound_bark.play()
-                       self.sound_meow.play()
-                       # Pontuação reinicia
-                       self.score = 0
+                   self.window.fill((0, 0, 0))
 
-                       cachorro.rect.x = 0
+                   font_go = pygame.font.SysFont('Cambria', 35, bold=True)
 
+                   go_surf = font_go.render(
+                       'GAME OVER',
+                       True,
+                       (255, 0, 0)
+                   )
+                   go_rect = go_surf.get_rect(
+                       center=(
+                           self.window.get_width() // 2,
+                           self.window.get_height() // 2
+                       )
+                   )
+                   self.window.blit(go_surf, go_rect)
+                   pygame.display.flip()
+
+                   pygame.time.delay(2000)
+                   pygame.mixer.stop()
+
+                   return self.score
+
+            # Tempo restante em segundos
+            tempo = max(0, self.timeout // 1000)
+            if tempo <= 0:
+               self.window.fill((0, 0, 0)) # tela preta de game over.
+               font_time = pygame.font.SysFont('Cambria', 40, bold=True)
+
+               time_surf = font_time.render(
+                   'TEMPO ESGOTADO!',
+                   True,
+                   (255, 253, 85)
+               )
+               time_rect = time_surf.get_rect(
+                   center=(
+                       self.window.get_width() // 2,
+                       self.window.get_height() // 2
+                   )
+               )
+
+               self.window.blit(time_surf, time_rect)
+
+               pygame.display.flip()
+
+               pygame.time.delay(2000)
+
+               pygame.mixer.stop()
+
+               return self.score
 
             # Exibe o placar na tela
-            score_surf = self.font.render(
-                f'Bolas: {self.score}',
-                True,
-                (250, 250, 250)
-            )
+            score_surf = self.font.render(f'Balls: {self.score}', True, (255, 255, 255))
 
-            self.window.blit(score_surf, (5, 5))
+            timer_surf = self.font.render(f'Time: {tempo}s', True, (255, 255, 255))
+
+            # Placar
+            self.window.blit(score_surf, (20, 5))
+
+            # Temporizador
+            self.window.blit(timer_surf, (20, 25))
 
             pygame.display.flip()
